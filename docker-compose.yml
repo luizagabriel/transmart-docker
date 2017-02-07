@@ -11,25 +11,45 @@ services:
       - "./transmart-web/httpd-vhosts.conf:/usr/local/apache2/conf/extra/httpd-vhosts.conf"
       - "./transmart-web/httpd.conf:/usr/local/apache2/conf/httpd.conf"
   tmapp:
-    build: ./transmart-app
+    image: dennyverbeeck/transmart-app:tmf-16.2
+    ports:
+      - "127.0.0.1:8009:8009"
     depends_on:
       - tmdb
       - tmsolr
+      - tmgwava
     volumes:
       - "./transmart-app/Config.groovy:/root/.grails/transmartConfig/Config.groovy"
       - "./transmart-app/DataSource.groovy:/root/.grails/transmartConfig/DataSource.groovy"
       - "./transmart-app/setenv.sh:/usr/local/tomcat/bin/setenv.sh"
+      - "appdata:/root/.grails"
+      - "apptmp:/tmp"
+      - "appwebapps:/usr/local/tomcat/webapps"
+  tmgwava:
+    image: dennyverbeeck/transmart-gwava:tmf-16.2
+    restart: unless-stopped
   tmdb:
-    build: ./transmart-db
+    image: dennyverbeeck/transmart-db:tmf-16.2
     ports:
       - "127.0.0.1:5432:5432"
+    volumes:
+      - "postgresdata:/var/lib/postgresql"
+      - "postgreslogs:/var/log/postgresql"
   tmsolr:
-    build: ./transmart-solr
+    image: dennyverbeeck/transmart-solr:tmf-16.2
   tmrserve:
-    build: ./transmart-rserve
-    volumes_from:
-      - tmapp
+    image: dennyverbeeck/transmart-rserve:tmf-16.2
+    volumes:
+      - "apptmp:/tmp"
+      - "appwebapps:/usr/local/tomcat/webapps"
   tmload:
-    build: ./transmart-load
+    image: dennyverbeeck/transmart-load:tmf-16.2
     depends_on:
       - tmdb
+
+volumes:
+  appdata:
+  apptmp:
+  appwebapps:
+  postgresdata:
+  postgreslogs:
